@@ -24,7 +24,7 @@ VerilogInfo = provider(
     },
 )
 
-def make_dag_entry(srcs, hdrs, data, deps, label, tags):
+def make_dag_entry(srcs, hdrs, includes, data, deps, label, tags):
     """Create a new DAG entry for use in VerilogInfo.
 
     As VerilogInfo should be created via 'merge_verilog_info' (rather than directly),
@@ -39,6 +39,7 @@ def make_dag_entry(srcs, hdrs, data, deps, label, tags):
     Args:
       srcs: A list of File that are 'srcs'.
       hdrs: A list of File that are 'hdrs'.
+      includes: A list of str that are 'includes'.
       data: A list of File that are `data`.
       deps: A list of Label that are deps of this entry.
       label: A Label to use as the name for this entry.
@@ -49,6 +50,7 @@ def make_dag_entry(srcs, hdrs, data, deps, label, tags):
     return struct(
         srcs = tuple(srcs),
         hdrs = tuple(hdrs),
+        includes = tuple(includes),
         data = tuple(data),
         deps = tuple(deps),
         tags = tuple(tags),
@@ -95,8 +97,9 @@ def _verilog_library_impl(ctx):
     verilog_info = make_verilog_info(
         new_entries = [make_dag_entry(
             srcs = ctx.files.srcs,
-            data = ctx.files.data,
             hdrs = ctx.files.hdrs,
+            includes = [],
+            data = ctx.files.data,
             deps = ctx.attr.deps,
             label = ctx.label,
             tags = [],

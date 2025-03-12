@@ -114,6 +114,7 @@ def _verilator_cc_library(ctx):
     transitive_srcs = depset([], transitive = [ctx.attr.module[VerilogInfo].dag])
     all_srcs = [verilog_info_struct.srcs for verilog_info_struct in transitive_srcs.to_list()]
     all_data = [verilog_info_struct.data for verilog_info_struct in transitive_srcs.to_list()]
+    all_includes = [include for sub_tuple in [verilog_info_struct.includes for verilog_info_struct in transitive_srcs.to_list()] for include in sub_tuple]
     all_files = [src for sub_tuple in (all_srcs + all_data) for src in sub_tuple]
 
     # Filter out .dat files.
@@ -138,6 +139,7 @@ def _verilator_cc_library(ctx):
     args.add("--prefix", prefix)
     if ctx.attr.trace:
         args.add("--trace")
+    args.add_all(all_includes, format_each = "-I%s")
     args.add_all(verilog_files, expand_directories = True, map_each = _only_sv)
     args.add_all(verilator_toolchain.extra_vopts)
     args.add_all(ctx.attr.vopts, expand_directories = False)
