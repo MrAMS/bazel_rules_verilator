@@ -85,9 +85,16 @@ def cc_compile_and_link_static_library(ctx, srcs, hdrs, deps, runfiles, includes
         ),
     ]
 
+_SV_SRC = ["sv", "v"]
 _CPP_SRC = ["cc", "cpp", "cxx", "c++"]
 _HPP_SRC = ["h", "hh", "hpp"]
 _RUNFILES = ["dat", "mem"]
+
+def _only_sv(f):
+    """Filter for just C++ headers"""
+    if f.extension in _SV_SRC:
+        return f.path
+    return None
 
 def _only_cpp(f):
     """Filter for just C++ source/headers"""
@@ -131,8 +138,7 @@ def _verilator_cc_library(ctx):
     args.add("--prefix", prefix)
     if ctx.attr.trace:
         args.add("--trace")
-    for verilog_file in verilog_files:
-        args.add(verilog_file.path)
+    args.add_all(verilog_files, expand_directories = True, map_each = _only_sv)
     args.add_all(verilator_toolchain.extra_vopts)
     args.add_all(ctx.attr.vopts, expand_directories = False)
 
