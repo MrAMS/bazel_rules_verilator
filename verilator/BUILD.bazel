@@ -26,6 +26,7 @@ toolchain_type(
 
 verilator_toolchain(
     name = "verilator_toolchain_impl",
+    systemc = "@verilator//:systemc",
     verilator = "@verilator//:verilator_executable",
     deps = [
         "@zlib//:zlib",
