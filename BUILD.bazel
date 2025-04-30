@@ -21,7 +21,7 @@ package(
 
 license(
     name = "package_license",
-    package_name = "bazel_rules_hdl",
+    package_name = "rules_verilator",
 )
 
 licenses(["notice"])

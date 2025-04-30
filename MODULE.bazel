@@ -1,0 +1,20 @@
+module(
+    name = "rules_verilator",
+    version = "5.034",
+    bazel_compatibility = [">=7.5.0"],
+    repo_name = "rules_hdl",
+)
+
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+
+bazel_dep(name = "googletest", version = "1.16.0.bcr.1", dev_dependency = True)
+
+bazel_dep(name = "rules_cc", version = "0.1.1")
+bazel_dep(name = "rules_license", version = "1.0.0")
+bazel_dep(name = "verilator", version = "5.034.ar.1")
+bazel_dep(name = "zlib", version = "1.3.1.bcr.5")
+
+register_toolchains(
+    "//verilator:verilator_toolchain",
+    dev_dependency = True,
+)
