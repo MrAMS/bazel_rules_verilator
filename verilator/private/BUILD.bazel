@@ -1,0 +1,13 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+cc_binary(
+    name = "verilator_copy_tree",
+    srcs = ["verilator_copy_tree.cc"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "verilator_process_wrapper",
+    srcs = ["verilator_process_wrapper.cc"],
+    visibility = ["//visibility:public"],
+)
