@@ -1,0 +1,15 @@
+{
+  "homepage": "https://github.com/MrAMS/bazel_rules_verilator",
+  "maintainers": [
+    {
+      "github": "MrAMS"
+    }
+  ],
+  "repository": [
+    "github:MrAMS/bazel_rules_verilator"
+  ],
+  "versions": [
+    "5.034"
+  ],
+  "yanked_versions": {}
+}

@@ -45,6 +45,9 @@ test:ciremotebuild --remote_timeout=3600
 # https://github.com/bazelbuild/bazel/issues/8195
 build --incompatible_disallow_empty_glob=true
 
+# SystemC support configuration
+build:systemc --extra_toolchains=//verilator:verilator_toolchain_with_systemc
+
 ###############################################################################
 ## User flags
 ###############################################################################

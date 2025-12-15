@@ -26,18 +26,27 @@ toolchain_type(
 
 verilator_toolchain(
     name = "verilator_toolchain_impl",
-    systemc = "@verilator//:systemc",
     verilator = "@verilator//:verilator_executable",
-    deps = [
-        "@zlib//:zlib",
-        "@verilator//:libverilator",
-        "@verilator//:svdpi",
-    ],
+    deps = ["@verilator"],
 )
 
 toolchain(
     name = "verilator_toolchain",
     toolchain = ":verilator_toolchain_impl",
+    toolchain_type = ":toolchain_type",
+    visibility = ["//visibility:public"],
+)
+
+verilator_toolchain(
+    name = "verilator_toolchain_with_systemc_impl",
+    systemc = "@systemc//:systemc",
+    verilator = "@verilator//:verilator_executable",
+    deps = ["@verilator"],
+)
+
+toolchain(
+    name = "verilator_toolchain_with_systemc",
+    toolchain = ":verilator_toolchain_with_systemc_impl",
     toolchain_type = ":toolchain_type",
     visibility = ["//visibility:public"],
 )

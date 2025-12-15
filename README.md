@@ -1,141 +1,118 @@
-# bazel_rules_hdl
-Hardware Description Language (Verilog, VHDL, Chisel, nMigen, etc) with open tools (Yosys, Verilator, OpenROAD, etc) rules for Bazel (https://bazel.build)
+# rules_verilator
 
-**THIS REPO REQUIRES BAZEL 5.4.0 or greater**
+Bazel rules for Verilator-based SystemVerilog simulation using the Bazel Central Registry (BCR) Verilator toolchain.
+
+This is a fork of the Verilator rules from [hdl/bazel_rules_hdl](https://github.com/hdl/bazel_rules_hdl), modified to use the official [BCR Verilator module](https://registry.bazel.build/modules/verilator) instead of bundling Verilator binaries.
+
+## Features
+
+- Uses BCR Verilator (v5.036+) for better reproducibility and version management
+- Supports both C++ and SystemC output
+- Optional waveform tracing support
+- Compatible with Bazel 7.5.0+
 
 ## Installation
 
-In your `WORKSPACE` file. Which is a file at the top directory of every bazel
-repo:
+### Default Installation (C++ Only)
+
+Add the following to your `MODULE.bazel`:
 
 ```starlark
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
-
-# You don't need these variables, but are useful for configurability.
-# Feel free to hardcode these values in the maybe http_archive below.
-rules_hdl_git_hash = "{LATEST_HASH}"
-rules_hdl_git_sha256 = "{LATEST_SHA}"
-
-maybe(
-    http_archive,
-    name = "rules_hdl",
-    sha256 = rules_hdl_git_sha256,
-    strip_prefix = "bazel_rules_hdl-%s" % rules_hdl_git_hash,
-    urls = [
-        "https://github.com/hdl/bazel_rules_hdl/archive/%s.tar.gz" % rules_hdl_git_hash,
-    ],
-)
-
-load("@rules_hdl//dependency_support:dependency_support.bzl", rules_hdl_dependency_support = "dependency_support")
-rules_hdl_dependency_support()
-
-load("@rules_hdl//:init.bzl", rules_hdl_init = "init")
-rules_hdl_init()
+bazel_dep(name = "rules_verilator", version = "0.1.0")
+bazel_dep(name = "verilator", version = "5.036.bcr.3")
 ```
+
+The default toolchain supports C++ output only and does not require SystemC.
+
+### With SystemC Support
+
+If you need SystemC output, add the SystemC dependency and register the SystemC-enabled toolchain:
+
+```starlark
+bazel_dep(name = "rules_verilator", version = "0.1.0")
+bazel_dep(name = "verilator", version = "5.036.bcr.3")
+bazel_dep(name = "systemc", version = "3.0.2")
+
+# Register the SystemC-enabled toolchain
+register_toolchains(
+    "@rules_verilator//verilator:verilator_toolchain_with_systemc",
+)
+```
+
+> **Note**: Verilator and SystemC are not bundled with `rules_verilator`. Users must explicitly declare them in their own `MODULE.bazel`. SystemC is **optional** and only required if you set `systemc = True` in your `verilator_cc_library` targets.
 
 ## Usage
 
-See the following build file to synthesize a final ASIC design for a given piece
-of RTL written in verilog.
+### Basic Verilog Library
 
-This file is called `counter.v`. It is a 128 bit counter incremented on every
-positive edge of a clock signial.
-
-```verilog
-module counter(
-  input wire clk,
-  input wire reset,
-  output [127:0] out,
-);
-  reg [127:0] counter_tmp;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
-      counter_tmp <= 0;
-    end else begin
-      counter_tmp <= counter_tmp + 1;
-    end
-  end
-
-  assign out = counter_tmp;
-
-endmodule
-
-```
-
-The default PDK used is the Sky130 High Density standard cells.
-
-This is the `BUILD` file. Every thing in bazel needs a rule description of what
-to build. The rules use yosys and OpenROAD to place and route your design.
-
-```python
-load("@rules_hdl//synthesis:defs.bzl", "synthesize_rtl")
-load("@rules_hdl//place_and_route:build_defs.bzl", "place_and_route")
-load("@rules_hdl//verilog:defs.bzl", "verilog_library")
-
-place_and_route(
-    name = "counter_place_and_route",
-    clock_period = "10",
-    core_padding_microns = 20,
-    die_height_microns = 200,
-    die_width_microns = 200,
-    placement_density = "0.7",
-    synthesized_rtl = ":verilog_counter_synth",
-)
-
-synthesize_rtl(
-    name = "verilog_counter_synth",
-    top_module = "counter",
-    deps = [
-        ":verilog_counter",
-    ],
-)
+```starlark
+load("@rules_verilator//verilog:defs.bzl", "verilog_library")
 
 verilog_library(
-    name = "verilog_counter",
-    srcs = [
-        "counter.v",
-    ],
+    name = "my_module",
+    srcs = ["my_module.sv"],
+    hdrs = ["my_module.svh"],
 )
 ```
 
-At this point you should have the following three files at the top of your bazel
-workspace.
+### Verilator C++ Library
 
-```
-BUILD
-counter.v
-WORKSPACE
-```
+```starlark
+load("@rules_verilator//verilator:defs.bzl", "verilator_cc_library")
 
-When you run `bazel build //:counter_place_and_route`. It will output log files
-and a def file that represents the fully placed and routed design.
+verilator_cc_library(
+    name = "my_verilated_lib",
+    module = ":my_module",
+    module_top = "my_top_module",
+    trace = True,  # Enable waveform tracing
+    vopts = [
+        "-Wall",
+        "--x-assign fast",
+        "--x-initial fast",
+    ],
+)
 
-# Project Vision
-`hdl/bazel_rules_hdl` is a project that is designed to be a one stop shop for doing hardware dev with bazel.
-
-Through iteration we hope to eventually become an official bazel ruleset for doing HDL development.
-
-So that includes;
-
-  * Supporting designs targeting FPGAs and ASIC.
-  * Supporting software targeted to run on this custom hardware.
-  * Supporting testing via simulation, formal verification, emulation and others.
-
-Having rules that can take RTL and be chained to emit GDSII (Sky130/FOSS-PDKs), but that can also be used to target FPGAs and soft CPUs. We want to take advantage of remote builders to accelerate verification with massively parallel clusters. Using the open source community's tools like Yosys, OpenROAD, Verilator, Surelog etc.
-
-The vision of this is that this repository enables `bazel test //mychip/...` and `bazel build //mychip:gds` and in 10 minutes you have verified and emitted a fabricatable design even for the most complex designs.
-
-# Contributing
-
-## Testing
-
-For testing pull requests please run:
-
-```console
-bazel_rules_hdl$ python tools/test_everything.py
+cc_binary(
+    name = "my_test",
+    srcs = ["testbench.cpp"],
+    deps = [":my_verilated_lib"],
+)
 ```
 
-Note: `bazel test ...` does not run the tests in Bazel "remote" repositories,
-and `bazel_rules_hdl` bundles together support for several remote repositories
--- this script serves as a helper for testing them all explicitly.
+### Verilator SystemC Library
+
+```starlark
+load("@rules_verilator//verilator:defs.bzl", "verilator_cc_library")
+
+verilator_cc_library(
+    name = "my_verilated_sc_lib",
+    module = ":my_module",
+    module_top = "my_top_module",
+    systemc = True,  # Generate SystemC output
+    trace = True,
+    vopts = ["-Wall"],
+)
+
+cc_binary(
+    name = "my_sc_test",
+    srcs = ["testbench_sc.cpp"],
+    deps = [":my_verilated_sc_lib"],
+)
+```
+
+## Key Differences from rules_hdl
+
+- **No bundled Verilator**: Requires users to declare BCR Verilator dependency explicitly
+- **Optional SystemC**: SystemC is not bundled; users add it only when needed
+- **Bzlmod only**: Designed for MODULE.bazel, not legacy WORKSPACE
+- **Focused scope**: Only Verilator rules, no synthesis/PnR tools
+
+## Requirements
+
+- Bazel 7.5.0 or later
+- Verilator 5.036+ from BCR
+- SystemC 3.0.2 from BCR (optional, for SystemC output)
+
+## License
+
+Apache License 2.0 (inherited from bazel_rules_hdl)

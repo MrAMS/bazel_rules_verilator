@@ -18,6 +18,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("@rules_cc//cc:defs.bzl", "CcInfo")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("//verilog:defs.bzl", "VerilogInfo")
 
 def cc_compile_and_link_static_library(ctx, srcs, hdrs, deps, runfiles, includes = [], defines = []):
@@ -139,6 +140,10 @@ def _verilator_cc_library(ctx):
     if ctx.attr.trace:
         args.add("--trace")
     if ctx.attr.systemc:
+        if not verilator_toolchain.systemc:
+            fail("SystemC output requested but toolchain does not provide SystemC. " +
+                 "Either add systemc dependency and use '//verilator:verilator_toolchain_with_systemc', " +
+                 "or set systemc=False to use the default toolchain")
         args.add("--sc")
     else:
         args.add("--cc")
@@ -190,7 +195,7 @@ def _verilator_cc_library(ctx):
         defines = defines,
         runfiles = runfiles,
         includes = [verilator_output_hpp.path],
-        deps = (verilator_toolchain.deps + [verilator_toolchain.systemc]) if ctx.attr.systemc else verilator_toolchain.deps,
+        deps = (verilator_toolchain.deps + [verilator_toolchain.systemc]) if (ctx.attr.systemc and verilator_toolchain.systemc) else verilator_toolchain.deps,
     )
 
 verilator_cc_library = rule(
@@ -278,7 +283,7 @@ verilator_toolchain = rule(
         "systemc": attr.label(
             doc = "SystemC dependency to link into downstream targets.",
             providers = [CcInfo],
-            mandatory = True,
+            mandatory = False,
         ),
         "verilator": attr.label(
             doc = "The Verilator binary.",
