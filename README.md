@@ -1,5 +1,7 @@
 # rules_verilator
 
+[![CI](https://github.com/MrAMS/bazel_rules_verilator/actions/workflows/ci.yml/badge.svg)](https://github.com/MrAMS/bazel_rules_verilator/actions/workflows/ci.yml)
+
 Bazel rules for Verilator-based SystemVerilog simulation using the Bazel Central Registry (BCR) Verilator toolchain.
 
 This is a fork of the Verilator rules from [hdl/bazel_rules_hdl](https://github.com/hdl/bazel_rules_hdl), modified to use the official [BCR Verilator module](https://registry.bazel.build/modules/verilator) instead of bundling Verilator binaries.
