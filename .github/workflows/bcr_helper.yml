@@ -1,0 +1,74 @@
+name: BCR Helper
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  update-release-with-bcr-info:
+    name: Calc Hash & Update Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Calculate Hash & Generate Markdown
+        id: calc
+        run: |
+          # 1. 变量准备
+          REPO_NAME="${{ github.event.repository.name }}"
+          TAG_NAME="${{ github.ref_name }}"
+          PURE_VERSION="${TAG_NAME#v}"
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/archive/refs/tags/${TAG_NAME}.tar.gz"
+          FILENAME="${REPO_NAME}-${TAG_NAME}.tar.gz"
+
+          echo "⏳ Waiting for GitHub archive generation..."
+          sleep 5 #稍作等待，防止 404
+
+          echo "⬇️ Downloading: $DOWNLOAD_URL"
+          curl -L -H 'Cache-Control: no-cache' -o "$FILENAME" "$DOWNLOAD_URL"
+
+          # 2. 计算 Hash & Prefix
+          HASH_VALUE=$(openssl dgst -sha256 -binary "$FILENAME" | openssl base64 -A)
+          SRI_HASH="sha256-$HASH_VALUE"
+          PREFIX_DIR=$(tar -tzf "$FILENAME" | head -1 | cut -f1 -d"/")
+
+          # 3. 生成 JSON 字符串
+          # 使用 jq 生成压缩后的 JSON，方便嵌入 Markdown
+          JSON_CONTENT=$(jq -n \
+            --arg integrity "$SRI_HASH" \
+            --arg strip_prefix "$PREFIX_DIR" \
+            --arg url "$DOWNLOAD_URL" \
+            '{integrity: $integrity, strip_prefix: $strip_prefix, url: $url}')
+
+          # 4. 编写 Release 说明文件 (Markdown)
+          # 这里定义你在 Release 页面看到的内容
+          echo "## 🚀 BCR Submission Data" > release_body.md
+          echo "To submit this version to the Bazel Central Registry, copy the block below into:" >> release_body.md
+          echo "\`modules/rules_verilator/$PURE_VERSION/source.json\`" >> release_body.md
+          echo "" >> release_body.md
+          echo "\`\`\`json" >> release_body.md
+          # 使用 jq 重新格式化输出，使其美观（多行缩进）
+          echo "$JSON_CONTENT" | jq . >> release_body.md
+          echo "\`\`\`" >> release_body.md
+
+          echo "" >> release_body.md
+          echo "### ✅ Pre-submission Checklist" >> release_body.md
+          echo "- [ ] \`MODULE.bazel\` version is set to **$PURE_VERSION**" >> release_body.md
+          echo "- [ ] \`source.json\` integrity matches above" >> release_body.md
+
+      - name: Create/Update Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          # 读取上一步生成的文件作为 Release 内容
+          body_path: release_body.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
