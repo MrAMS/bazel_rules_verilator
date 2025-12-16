@@ -28,11 +28,17 @@ jobs:
       - name: Build all targets
         run: bazel build //...
 
+      - name: Run all tests
+        run: bazel test //verilator/tests:adder_test //verilator/tests:load_and_count_test //verilator/tests:nested_module_test --test_output=errors
+
+      - name: Run trace tests
+        run: bazel test //verilator/tests:adder_trace_test --test_output=errors
+
       - name: Build with SystemC support
         run: bazel build --config=systemc //verilator/tests:adder_systemc_verilator
 
-      - name: Run all tests (if any)
-        run: bazel test //... --test_output=errors || true
+      - name: Run SystemC tests (optional)
+        run: bazel test --config=systemc //verilator/tests:adder_systemc_test --test_output=errors || true
 
       - name: Check formatting
         run: |

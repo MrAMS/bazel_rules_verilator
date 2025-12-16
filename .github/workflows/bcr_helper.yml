@@ -10,65 +10,71 @@ permissions:
 
 jobs:
   update-release-with-bcr-info:
-    name: Calc Hash & Update Release
+    name: Pack, Calc Hash & Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Calculate Hash & Generate Markdown
+      - name: Package & Calculate Hash
         id: calc
         run: |
           # 1. 变量准备
           REPO_NAME="${{ github.event.repository.name }}"
           TAG_NAME="${{ github.ref_name }}"
           PURE_VERSION="${TAG_NAME#v}"
-          DOWNLOAD_URL="https://github.com/${{ github.repository }}/archive/refs/tags/${TAG_NAME}.tar.gz"
-          FILENAME="${REPO_NAME}-${TAG_NAME}.tar.gz"
 
-          echo "⏳ Waiting for GitHub archive generation..."
-          sleep 5 #稍作等待，防止 404
+          # 定义附件文件名 (这是我们将要上传到 Release 的文件)
+          # 格式通常为: repo_name-version.tar.gz
+          ASSET_NAME="${REPO_NAME}-${PURE_VERSION}.tar.gz"
 
-          echo "⬇️ Downloading: $DOWNLOAD_URL"
-          curl -L -H 'Cache-Control: no-cache' -o "$FILENAME" "$DOWNLOAD_URL"
+          # 定义 Release 附件的下载链接 (注意: 是 releases/download 路径)
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${TAG_NAME}/${ASSET_NAME}"
 
-          # 2. 计算 Hash & Prefix
-          HASH_VALUE=$(openssl dgst -sha256 -binary "$FILENAME" | openssl base64 -A)
+          echo "📦 Packaging locally to ensure stability..."
+          # 2. 本地打包 (关键步骤！)
+          # 使用 git archive 手动打包，确保内容和指纹绝对稳定
+          # --prefix 指定解压后的顶层目录名称，这也是 Bzlmod strip_prefix 需要的值
+          PREFIX_DIR="${REPO_NAME}-${PURE_VERSION}"
+          git archive --format=tar.gz --prefix="${PREFIX_DIR}/" -o "$ASSET_NAME" "$TAG_NAME"
+
+          echo "🧮 Calculating Hash..."
+          # 3. 计算 Hash (针对刚才本地生成的这个文件)
+          HASH_VALUE=$(openssl dgst -sha256 -binary "$ASSET_NAME" | openssl base64 -A)
           SRI_HASH="sha256-$HASH_VALUE"
-          PREFIX_DIR=$(tar -tzf "$FILENAME" | head -1 | cut -f1 -d"/")
 
-          # 3. 生成 JSON 字符串
-          # 使用 jq 生成压缩后的 JSON，方便嵌入 Markdown
+          # 4. 生成 JSON 字符串
           JSON_CONTENT=$(jq -n \
             --arg integrity "$SRI_HASH" \
             --arg strip_prefix "$PREFIX_DIR" \
             --arg url "$DOWNLOAD_URL" \
             '{integrity: $integrity, strip_prefix: $strip_prefix, url: $url}')
 
-          # 4. 编写 Release 说明文件 (Markdown)
-          # 这里定义你在 Release 页面看到的内容
+          # 5. 编写 Release 说明文件
           echo "## 🚀 BCR Submission Data" > release_body.md
-          echo "To submit this version to the Bazel Central Registry, copy the block below into:" >> release_body.md
-          echo "\`modules/rules_verilator/$PURE_VERSION/source.json\`" >> release_body.md
+          echo "Use the following \`source.json\` for BCR submission (Stable Artifact):" >> release_body.md
           echo "" >> release_body.md
           echo "\`\`\`json" >> release_body.md
-          # 使用 jq 重新格式化输出，使其美观（多行缩进）
           echo "$JSON_CONTENT" | jq . >> release_body.md
           echo "\`\`\`" >> release_body.md
 
           echo "" >> release_body.md
-          echo "### ✅ Pre-submission Checklist" >> release_body.md
-          echo "- [ ] \`MODULE.bazel\` version is set to **$PURE_VERSION**" >> release_body.md
-          echo "- [ ] \`source.json\` integrity matches above" >> release_body.md
+          echo "### ✅ Checklist" >> release_body.md
+          echo "- [ ] Artifact URL uses \`releases/download/...\` (Stable)" >> release_body.md
+          echo "- [ ] Integrity matches the attached tarball" >> release_body.md
 
-      - name: Create/Update Release
+          # 将文件名导出给下一步使用
+          echo "ASSET_NAME=$ASSET_NAME" >> $GITHUB_ENV
+
+      - name: Create/Update Release with Asset
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
-          # 读取上一步生成的文件作为 Release 内容
           body_path: release_body.md
           draft: false
           prerelease: false
+          # 关键修改：上传刚才本地打包的文件作为 Release 附件
+          files: ${{ env.ASSET_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

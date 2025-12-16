@@ -6,6 +6,9 @@
 #include "Vload_and_count.h"
 #include "gtest/gtest.h"
 
+// Required by Verilator on macOS
+double sc_time_stamp() { return 0; }
+
 namespace {
 
 class LoadAndCountTest : public testing::Test {

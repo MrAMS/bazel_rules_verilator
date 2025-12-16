@@ -22,6 +22,9 @@ Add the following to your `MODULE.bazel`:
 ```starlark
 bazel_dep(name = "rules_verilator", version = "0.1.0")
 bazel_dep(name = "verilator", version = "5.036.bcr.3")
+register_toolchains(
+    "@rules_verilator//verilator:verilator_toolchain",
+)
 ```
 
 The default toolchain supports C++ output only and does not require SystemC.

@@ -6,6 +6,9 @@
 #include "Vnested_module_2.h"
 #include "gtest/gtest.h"
 
+// Required by Verilator
+double sc_time_stamp() { return 0; }
+
 namespace {
 
 class NestedModuleTest : public testing::Test {
