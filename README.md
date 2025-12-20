@@ -1,6 +1,6 @@
 # rules_verilator
 
-[![BCR](https://img.shields.io/badge/rules_verilator-BCR-green)](https://registry.bazel.build/modules/rules_verilator)
+[![BCR](https://img.shields.io/badge/BCR-rules_verilator-green?logo=bazel)](https://registry.bazel.build/modules/rules_verilator)
 [![CI](https://github.com/MrAMS/bazel_rules_verilator/actions/workflows/ci.yml/badge.svg)](https://github.com/MrAMS/bazel_rules_verilator/actions/workflows/ci.yml)
 
 Bazel rules for Verilator-based SystemVerilog simulation using the Bazel Central Registry (BCR) Verilator toolchain.
