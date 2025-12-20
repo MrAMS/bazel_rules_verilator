@@ -49,6 +49,8 @@ register_toolchains(
 
 ## Usage
 
+You can check `verilator/tests` for examples as well.
+
 ### Basic Verilog Library
 
 ```starlark
