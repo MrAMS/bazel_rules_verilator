@@ -9,7 +9,7 @@ This is a fork of the Verilator rules from [hdl/bazel_rules_hdl](https://github.
 
 ## Features
 
-- Uses BCR Verilator (v5.036+) for better reproducibility and version management
+- Uses BCR Verilator for better reproducibility and version management
 - Supports both C++ and SystemC output
 - Optional waveform tracing support
 - Compatible with Bazel 7.5.0+
@@ -22,7 +22,7 @@ Add the following to your `MODULE.bazel`:
 
 ```starlark
 bazel_dep(name = "rules_verilator", version = "0.1.0")
-bazel_dep(name = "verilator", version = "5.036.bcr.3")
+bazel_dep(name = "verilator", version = "5.044")
 register_toolchains(
     "@rules_verilator//verilator:verilator_toolchain",
 )
@@ -36,7 +36,7 @@ If you need SystemC output, add the SystemC dependency and register the SystemC-
 
 ```starlark
 bazel_dep(name = "rules_verilator", version = "0.1.0")
-bazel_dep(name = "verilator", version = "5.036.bcr.3")
+bazel_dep(name = "verilator", version = "5.044")
 bazel_dep(name = "systemc", version = "3.0.2")
 
 # Register the SystemC-enabled toolchain
