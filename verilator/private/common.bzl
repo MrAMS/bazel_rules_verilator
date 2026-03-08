@@ -106,7 +106,14 @@ def _only_hpp(f):
     return None
 
 def collect_verilog_inputs(module):
-    """Flatten the Verilog DAG into source, include, and runfile lists."""
+    """Flatten the Verilog DAG into source, include, and runfile lists.
+
+    Args:
+        module: A target providing `VerilogInfo`.
+
+    Returns:
+        A struct with `includes`, `runfiles`, and flattened `verilog_files`.
+    """
     dag_entries = module[VerilogInfo].dag.to_list()
     all_srcs = [entry.srcs for entry in dag_entries]
     all_data = [entry.data for entry in dag_entries]
@@ -128,14 +135,29 @@ def collect_verilog_inputs(module):
     )
 
 def verilator_env(verilator_toolchain):
-    """Return the environment shared by all Verilator actions."""
+    """Return the environment shared by all Verilator actions.
+
+    Args:
+        verilator_toolchain: The resolved Verilator toolchain info.
+
+    Returns:
+        A dictionary of environment variables for Verilator actions.
+    """
     env = {}
     if verilator_toolchain._avoid_nondeterministic_outputs:
         env["VERILATOR_AVOID_NONDETERMINISTIC_OUTPUTS"] = "1"
     return env
 
 def copy_generated_cpp_and_hpp(ctx, generated_dir):
-    """Split generated tree artifacts into C++ sources and public headers."""
+    """Split generated tree artifacts into C++ sources and public headers.
+
+    Args:
+        ctx: Rule context.
+        generated_dir: Tree artifact containing Verilator-generated outputs.
+
+    Returns:
+        A struct with `cpp` and `hpp` tree artifacts.
+    """
     generated_cpp = ctx.actions.declare_directory(ctx.label.name + "_cpp")
     generated_hpp = ctx.actions.declare_directory(ctx.label.name + "_h")
 
