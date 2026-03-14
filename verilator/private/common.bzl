@@ -3,7 +3,7 @@
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("@rules_cc//cc:defs.bzl", "CcInfo")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
-load("//verilog:defs.bzl", "VerilogInfo")
+load("@rules_verilog//verilog:defs.bzl", "VerilogInfo")
 
 _SV_SRC = ["sv", "v"]
 _CPP_SRC = ["cc", "cpp", "cxx", "c++"]

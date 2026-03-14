@@ -13,8 +13,8 @@
 # limitations under the License.
 
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_verilog//verilog:defs.bzl", "verilog_library")
 load("//verilator:defs.bzl", "verilator_cc_library", "verilator_hierarchical_block_cc_library", "verilator_hierarchical_plan", "verilator_hierarchical_top_cc_library")
-load("//verilog:defs.bzl", "verilog_library")
 
 package(
     default_applicable_licenses = ["//:package_license"],

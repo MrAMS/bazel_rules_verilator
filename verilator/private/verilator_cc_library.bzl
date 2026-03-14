@@ -1,7 +1,7 @@
 """Rule definition for `verilator_cc_library`."""
 
 load("@rules_cc//cc:defs.bzl", "CcInfo")
-load("//verilog:defs.bzl", "VerilogInfo")
+load("@rules_verilog//verilog:defs.bzl", "VerilogInfo")
 load(
     ":common.bzl",
     "cc_compile_and_link_static_library",

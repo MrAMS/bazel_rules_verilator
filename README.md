@@ -5,12 +5,11 @@
 
 Bazel rules for Verilator-based SystemVerilog simulation using the Bazel Central Registry (BCR) Verilator toolchain.
 
-This is a fork of the Verilator rules from [hdl/bazel_rules_hdl](https://github.com/hdl/bazel_rules_hdl), modified to use the official [BCR Verilator module](https://registry.bazel.build/modules/verilator) instead of bundling Verilator binaries.
-
 ## Features
 
 - Uses BCR Verilator for better reproducibility and version management
 - Supports both C++ and SystemC output
+- Support incremental hierarchical builds
 - Optional waveform tracing support
 - Compatible with Bazel 7.5.0+
 
@@ -21,6 +20,7 @@ This is a fork of the Verilator rules from [hdl/bazel_rules_hdl](https://github.
 Add the following to your `MODULE.bazel`:
 
 ```starlark
+bazel_dep(name = "rules_verilog", version = "0.1.0")
 bazel_dep(name = "rules_verilator", version = "0.2.0")
 bazel_dep(name = "verilator", version = "5.044")
 register_toolchains(
@@ -35,6 +35,7 @@ The default toolchain supports C++ output only and does not require SystemC.
 If you need SystemC output, add the SystemC dependency and register the SystemC-enabled toolchain:
 
 ```starlark
+bazel_dep(name = "rules_verilog", version = "0.1.0")
 bazel_dep(name = "rules_verilator", version = "0.2.0")
 bazel_dep(name = "verilator", version = "5.044")
 bazel_dep(name = "systemc", version = "3.0.2")
@@ -45,23 +46,12 @@ register_toolchains(
 )
 ```
 
-> **Note**: Verilator and SystemC are not bundled with `rules_verilator`. Users must explicitly declare them in their own `MODULE.bazel`. SystemC is **optional** and only required if you set `systemc = True` in your `verilator_cc_library` targets.
+> [!TIP]
+> Verilator and SystemC are not bundled with `rules_verilator`. Users must explicitly declare them in their own `MODULE.bazel`. SystemC is **optional** and only required if you set `systemc = True` in your `verilator_cc_library` targets.
 
 ## Usage
 
 You can check `verilator/tests` for examples as well.
-
-### Basic Verilog Library
-
-```starlark
-load("@rules_verilator//verilog:defs.bzl", "verilog_library")
-
-verilog_library(
-    name = "my_module",
-    srcs = ["my_module.sv"],
-    hdrs = ["my_module.svh"],
-)
-```
 
 ### Verilator C++ Library
 
@@ -121,7 +111,7 @@ load(
     "verilator_hierarchical_plan",
     "verilator_hierarchical_top_cc_library",
 )
-load("@rules_verilator//verilog:defs.bzl", "verilog_library")
+load("@rules_verilog//verilog:defs.bzl", "verilog_library")
 
 verilog_library(
     name = "block_a_sv",
@@ -186,10 +176,14 @@ Notes:
 
 ## Key Differences from rules_hdl
 
+> [!TIP]
+> This was a fork of the Verilator rules from [hdl/bazel_rules_hdl](https://github.com/hdl/bazel_rules_hdl)
+
 - **No bundled Verilator**: Requires users to declare BCR Verilator dependency explicitly
 - **Optional SystemC**: SystemC is not bundled; users add it only when needed
 - **Bzlmod only**: Designed for MODULE.bazel, not legacy WORKSPACE
 - **Focused scope**: Only Verilator rules, no synthesis/PnR tools
+- **More feature**: Newer version of Verilator, supporting incremental hierarchical builds
 
 ## Requirements
 
