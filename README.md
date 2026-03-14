@@ -21,7 +21,7 @@ Add the following to your `MODULE.bazel`:
 
 ```starlark
 bazel_dep(name = "rules_verilog", version = "0.1.0")
-bazel_dep(name = "rules_verilator", version = "0.2.0")
+bazel_dep(name = "rules_verilator", version = "0.2.1")
 bazel_dep(name = "verilator", version = "5.044")
 register_toolchains(
     "@rules_verilator//verilator:verilator_toolchain",
@@ -36,7 +36,7 @@ If you need SystemC output, add the SystemC dependency and register the SystemC-
 
 ```starlark
 bazel_dep(name = "rules_verilog", version = "0.1.0")
-bazel_dep(name = "rules_verilator", version = "0.2.0")
+bazel_dep(name = "rules_verilator", version = "0.2.1")
 bazel_dep(name = "verilator", version = "5.044")
 bazel_dep(name = "systemc", version = "3.0.2")
 
